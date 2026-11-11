@@ -3,6 +3,14 @@
   "version": "1.1.0",
   "description": "Floating bug-report & support widget: screenshots, area/element capture, markup editor, screen recording, console/network diagnostics. Framework-agnostic, Shadow-DOM isolated.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ahamedriham/bug-ticket-widget.git"
+  },
+  "homepage": "https://github.com/ahamedriham/bug-ticket-widget#readme",
+  "bugs": {
+    "url": "https://github.com/ahamedriham/bug-ticket-widget/issues"
+  },
   "type": "module",
   "main": "./dist/bug-ticket.cjs",
   "module": "./dist/bug-ticket.esm.js",
