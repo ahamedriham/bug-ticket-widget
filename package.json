@@ -1,0 +1,60 @@
+{
+  "name": "bug-ticket-widget",
+  "version": "1.0.0",
+  "description": "Floating bug-report & support widget: screenshots, area/element capture, markup editor, screen recording, console/network diagnostics. Framework-agnostic, Shadow-DOM isolated.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/bug-ticket.cjs",
+  "module": "./dist/bug-ticket.esm.js",
+  "browser": "./dist/bug-ticket.umd.js",
+  "unpkg": "./dist/bug-ticket.umd.js",
+  "jsdelivr": "./dist/bug-ticket.umd.js",
+  "types": "./types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./dist/bug-ticket.esm.js",
+      "require": "./dist/bug-ticket.cjs",
+      "default": "./dist/bug-ticket.esm.js"
+    },
+    "./umd": "./dist/bug-ticket.umd.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src",
+    "types",
+    "README.md"
+  ],
+  "sideEffects": [
+    "./dist/bug-ticket.umd.js",
+    "./src/umd.js"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "vue": "^3.3.0"
+  },
+  "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "vue": "^3.4.21"
+  },
+  "keywords": [
+    "bug report",
+    "feedback widget",
+    "screenshot",
+    "html2canvas",
+    "screen recording",
+    "support widget",
+    "vue",
+    "laravel",
+    "shadow dom"
+  ]
+}
