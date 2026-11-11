@@ -334,6 +334,13 @@ types/index.d.ts         TypeScript definitions
 
 ## 9. Publishing
 
+From GitHub (recommended): add the repository secret `NPM_TOKEN` (an npm granular access token with
+read and write access to `bug-ticket-widget`), bump `version` in `package.json`, then create a GitHub
+Release tagged `vX.Y.Z` with the same version. The *Publish to npm* workflow builds and publishes it
+with provenance.
+
+From your machine:
+
 ```bash
 npm version patch && npm publish --access public
 ```

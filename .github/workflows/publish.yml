@@ -1,0 +1,32 @@
+name: Publish to npm
+
+# Publish by creating a GitHub Release (tag vX.Y.Z matching package.json), or
+# run it by hand from the Actions tab. Needs the repository secret NPM_TOKEN:
+# an npm granular access token with read and write access to bug-ticket-widget.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # npm provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0 (v4)
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0 (v4)
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+      - run: npm ci
+      - name: Tag matches package.json version
+        if: github.event_name == 'release'
+        run: test "v$(node -p "require('./package.json').version")" = "${{ github.event.release.tag_name }}"
+      # prepublishOnly runs the build.
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
