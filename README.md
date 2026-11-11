@@ -53,7 +53,7 @@ useEffect(() => { init({ endpoint: '/api/feedback' }); return () => destroy(); }
 
 The UMD build uses `window.Vue` if your page already has it, otherwise loads Vue 3 from cdnjs on first init.
 
-That is a complete setup: the floating button opens the bug report form directly. **Ctrl+Shift+B** does the same.
+That is a complete setup: the floating button opens the bug report form directly. **Ctrl+Shift+B** opens and closes the panel (with only *Report an issue* enabled, that is the report form).
 
 Want the full support menu (rate / ideas / report)? Enable the built-ins:
 
@@ -177,7 +177,7 @@ All options are optional. Nested objects are merged with the defaults, so you on
 | `button.draggable` | `true` | Drag anywhere; `rememberPosition:true` persists it. |
 | `button.autoHide` / `autoHideDelay` | `true` / `3000` | Fade after inactivity. |
 | `button.position` | `'bottom-right'` | Also `bottom-left`, `top-right`, `top-left`; `button.offset` = px from the edges. |
-| `button.hidden` | `false` | No floating button; open it from your own UI with `BugTicket.open()`. |
+| `button.hidden` | `false` | No floating button; open the panel from your own UI with `BugTicket.open({ anchor: el })` / `toggle({ anchor: el })`. Without an anchor it opens at `button.position`. |
 | `icons` | `{}` | Override built-in SVGs: `star, idea, bug, link, help, close, back, check, area, page, element, record, native, upload, attach`. |
 | `stylesheets` | `[]` | Stylesheets loaded *inside* the widget, e.g. Font Awesome so `icon: '<i class="fa-solid fa-headset"></i>'` works. |
 | `css` | `''` | Extra CSS scoped to the widget. Stable class names: `.bt-fab .bt-panel .bt-head .bt-item .bt-sheet .bt-modal .bt-field .bt-btn …` |
@@ -211,7 +211,7 @@ Item fields: `id, type ('rating'|'feedback'|'bug'|'link'|'custom'), title, subti
 | `severities` | `['Blocker','Major','Minor','Trivial']` | Segmented control values. |
 | `fields` | `{ area:true, expected:true, actual:true, attachments:true }` | Hide fields with `false`. |
 | `capture` | `{ page, area, native, element, record }` all `true` | Capture methods offered. |
-| `record` | `{ maxSeconds:60, mic:false, mimeType:null }` | Recording limits. |
+| `record` | `{ maxSeconds:60, mic:false, mimeType:null }` | Recording limits. `mic` is the starting state of the *Include microphone* checkbox the user sees. |
 | `diagnostics` | `{ console:true, network:true, breadcrumbs:true, storage:false }` | What is collected (`storage` = localStorage/sessionStorage *key names* only). |
 | `maxImageWidth` / `imageFormat` / `imageQuality` | `1600` / `'png'` / `0.9` | Screenshots larger than this are downscaled. |
 | `saveDraft` | `true` | Text fields survive a reload. |
@@ -219,7 +219,7 @@ Item fields: `id, type ('rating'|'feedback'|'bug'|'link'|'custom'), title, subti
 
 ### Misc
 
-`locale` (`'en'` \| `'ar'`), `labels` (override any string, see the `I18N` table at the top of the file), `dir` (`'auto'|'ltr'|'rtl'`), `hotkey` (`'ctrl+shift+b'` or `false`), `vueUrl`, `html2canvasUrl` (self-host the CDN files if needed).
+`locale` (`'en'` \| `'ar'`), `labels` (override any string, see the `I18N` table at the top of the file), `dir` (`'auto'|'ltr'|'rtl'`), `hotkey` (`'ctrl+shift+b'` or `false`; toggles the panel), `vueUrl`, `html2canvas` (the function — `import html2canvas from 'html2canvas'`; no CDN download) and `html2canvasUrl` (fallback script URL, default cdnjs).
 
 ---
 
@@ -282,6 +282,29 @@ BugTicket.init({ stylesheets: ['https://cdnjs.cloudflare.com/ajax/libs/font-awes
 - Keyboard: Esc backs out one layer at a time; in the editor B/A/P/T/U/C switch tools, Ctrl+Z undo, Enter done.
 - Privacy: users can blur sensitive areas before sending; the widget never sends anything until the user presses Send.
 
+### Content-Security-Policy
+
+With the npm build and `html2canvas` passed as a function, the widget needs no third-party origin:
+
+| Directive | Needed for |
+|---|---|
+| `img-src data: blob:` | Screenshots, thumbnails, the markup editor |
+| `media-src blob:` | Previewing a screen recording |
+| `style-src 'unsafe-inline'` | The widget's own `<style>` elements inside its Shadow DOM |
+| `connect-src <your endpoint>` | Sending reports (when you use `endpoint`) |
+| `script-src <html2canvas origin>` | Only if you use `html2canvasUrl` instead of `html2canvas` |
+| `script-src cdnjs.cloudflare.com` | Only for the `<script>` (UMD) build when the page has no `window.Vue` (or set `vueUrl` to your own copy) |
+| `font-src` / `style-src fonts.googleapis.com, fonts.gstatic.com` | Only with `theme.loadFont: true` (default) |
+
+`Permissions-Policy`: `display-capture` for *Native screenshot* and recording, `microphone` for recordings with sound.
+
+### Opening the panel from your own button
+
+```js
+BugTicket.init({ endpoint: '/api/feedback', button: { hidden: true } });
+document.querySelector('#help').addEventListener('click', (e) => BugTicket.toggle({ anchor: e.currentTarget }));
+```
+
 ---
 
 ## 7. Package layout
@@ -295,9 +318,21 @@ src/index.js             npm entry + BugTicketPlugin / useBugTicket
 types/index.d.ts         TypeScript definitions
 ```
 
-`npm run build` (esbuild) regenerates `dist/`. Self-hosting html2canvas: pass `html2canvasUrl`.
+`npm run build` (esbuild) regenerates `dist/`. It compiles the widget template into a render function, so the npm builds run on Vue's runtime-only build (what Vite / webpack / Nuxt give you) and never need `unsafe-eval`. Self-hosting html2canvas: pass `html2canvas` (the function) or `html2canvasUrl`.
 
-## 8. Publishing
+## 8. Changelog
+
+**1.1.0**
+- All builds ship a precompiled render function: the widget now renders in Vite / webpack / Nuxt apps (Vue runtime-only build) and needs no `unsafe-eval`.
+- The npm entry imports only the Vue functions it uses, so your bundler can still drop the rest.
+- The panel has its own z-index, so app layouts with positioned, z-indexed elements no longer cover it.
+- `button.hidden: true` keeps the panel: open it with `open({ anchor })` / `toggle({ anchor })`, or at `button.position`.
+- New `html2canvas` option (pass the function) — no CDN download, works under a strict CSP.
+- *Include microphone* checkbox next to *Record the screen*; a message when the microphone is refused.
+- The success message mentions screenshots only when some were sent.
+- README: Ctrl+Shift+B toggles the panel; Content-Security-Policy section.
+
+## 9. Publishing
 
 ```bash
 npm version patch && npm publish --access public

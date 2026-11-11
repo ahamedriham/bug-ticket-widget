@@ -25,7 +25,7 @@
  * DELIVERY  endpoint, headers, format:'json'|'multipart', onSubmit(payload), onSuccess, onError, successLink, meta, reporter, rememberReporter
  *   every submission carries { type:'bug'|'rating'|'feedback'|…, reporter, context, meta }
  * BUG FLOW  severities, fields, capture, record, diagnostics, maxImageWidth, imageFormat, imageQuality, saveDraft, suggestTitle
- * MISC      locale 'en'|'ar', labels, dir, hotkey, vueUrl, html2canvasUrl
+ * MISC      locale 'en'|'ar', labels, dir, hotkey, vueUrl, html2canvas (function), html2canvasUrl
  *
  * API  init · open(itemId?) · close · toggle · destroy · openBug(step?) · capture(kind) · record · stopRecording
  *      setBadge(n) · setMeta · setReporter · setTheme(partial) · resetPosition · getContext · on(evt, fn)
@@ -61,7 +61,7 @@ const global = typeof window !== 'undefined' ? window : globalThis;
       box: 'Box', arrow: 'Arrow', pen: 'Pencil', text: 'Text', blur: 'Blur', crop: 'Crop', undo: 'Undo', save: 'Done', cropSave: 'Crop & done', textPh: 'Type a label, then click where it goes',
       hBox: 'Drag to draw a box', hArrow: 'Drag from tail to head', hPen: 'Draw freehand', hText: 'Click to place the label', hBlur: 'Drag over sensitive data to hide it', hCrop: 'Drag to choose what to keep',
       pickedEl: 'Element', draftBanner: 'We kept your unsent draft.', discard: 'Discard', dirtyClose: 'Discard this report?', keep: 'Keep editing',
-      sentTitle: 'Thanks, report sent', sentBody: 'The team now has your description, screenshots and diagnostics.', sentId: 'Reference', copyLink: 'Copy link', copied: 'Copied', openLink: 'Open', another: 'Report another',
+      sentTitle: 'Thanks, report sent', sentBody: 'The team now has your description, screenshots and diagnostics.', sentBodyText: 'The team now has your description and diagnostics.', micDenied: 'Microphone not available — recording without sound.', sentId: 'Reference', copyLink: 'Copy link', copied: 'Copied', openLink: 'Open', another: 'Report another',
       needTitle: 'Add a short title so the team knows what to look for.', needText: 'Please write something first.', captureFail: 'Capture failed: {msg}. Paste or drop a screenshot instead.', sendFail: 'Could not send: {msg}', retry: 'Try again', unsupported: 'Not supported in this browser.' },
     ar: { support: 'الدعم', openWidget: 'فتح الدعم', rate: 'قيّم تجربتك', rateSub: 'شاركنا رأيك العام', ideas: 'أرسل فكرة', ideasSub: 'أخبرنا بما تود رؤيته', bug: 'الإبلاغ عن مشكلة', bugSub: 'أخبرنا بما لا يعمل',
       backToOptions: 'العودة إلى الخيارات', submit: 'إرسال', thanks: 'شكرًا لك!', thanksSub: 'تم استلام ملاحظاتك.', ratePh: 'ما الذي أعجبك وما الذي يمكن تحسينه؟', ideaPh: 'صف فكرتك…', ideaTitlePh: 'عنوان قصير', pickStars: 'انقر على نجمة للتقييم', starLabels: ['ضعيف', 'مقبول', 'جيد', 'جيد جدًا', 'ممتاز'], capturingTip: 'جارٍ التقاط الصفحة…', autoAttached: 'تُرفق تفاصيل الصفحة والبيانات التشخيصية تلقائيًا', optional: 'اختياري',
@@ -71,7 +71,7 @@ const global = typeof window !== 'undefined' ? window : globalThis;
       send: 'إرسال البلاغ', sending: 'جارٍ الإرسال…', uploading: 'جارٍ الرفع {p}%', back: 'رجوع', cancel: 'إلغاء', close: 'إغلاق', attached: 'تمت إضافة اللقطة', recorded: 'تمت إضافة التسجيل', diag: 'مرفق تلقائيًا: {list}', dConsole: '{n} خطأ من وحدة التحكم', dNetwork: 'آخر الطلبات', dCrumbs: 'آخر إجراءاتك',
       selTip: 'اسحب لتحديد المنطقة · Esc للإلغاء', elTip: 'انقر على العنصر المعطّل · Esc للإلغاء', recording: 'جارٍ التسجيل', stop: 'إيقاف', withMic: 'تضمين الميكروفون', box: 'مربع', arrow: 'سهم', pen: 'قلم', text: 'نص', blur: 'تمويه', crop: 'قص', undo: 'تراجع', save: 'تم', cropSave: 'قص وإنهاء',
       textPh: 'اكتب التسمية ثم انقر مكانها', hBox: 'اسحب لرسم مربع', hArrow: 'اسحب من الذيل إلى الرأس', hPen: 'ارسم بحرية', hText: 'انقر لوضع التسمية', hBlur: 'اسحب فوق البيانات الحساسة لإخفائها', hCrop: 'اسحب لاختيار ما تحتفظ به', pickedEl: 'العنصر',
-      draftBanner: 'احتفظنا بمسودتك غير المرسلة.', discard: 'تجاهل', dirtyClose: 'تجاهل هذا البلاغ؟', keep: 'متابعة التحرير', sentTitle: 'شكرًا، تم إرسال البلاغ', sentBody: 'لدى الفريق الآن وصفك ولقطاتك والبيانات التشخيصية.', sentId: 'المرجع', copyLink: 'نسخ الرابط', copied: 'تم النسخ', openLink: 'فتح', another: 'بلاغ آخر',
+      draftBanner: 'احتفظنا بمسودتك غير المرسلة.', discard: 'تجاهل', dirtyClose: 'تجاهل هذا البلاغ؟', keep: 'متابعة التحرير', sentTitle: 'شكرًا، تم إرسال البلاغ', sentBody: 'لدى الفريق الآن وصفك ولقطاتك والبيانات التشخيصية.', sentBodyText: 'لدى الفريق الآن وصفك والبيانات التشخيصية.', micDenied: 'الميكروفون غير متاح — سيتم التسجيل بدون صوت.', sentId: 'المرجع', copyLink: 'نسخ الرابط', copied: 'تم النسخ', openLink: 'فتح', another: 'بلاغ آخر',
       needTitle: 'أضف عنوانًا قصيرًا ليعرف الفريق ما يبحث عنه.', needText: 'يرجى كتابة شيء أولًا.', captureFail: 'فشل الالتقاط: {msg}. الصق أو أسقط لقطة بدلاً من ذلك.', sendFail: 'تعذر الإرسال: {msg}', retry: 'حاول مجددًا', unsupported: 'غير مدعوم في هذا المتصفح.' },
   };
 
@@ -90,6 +90,7 @@ const global = typeof window !== 'undefined' ? window : globalThis;
     maxImageWidth: 1600, imageFormat: 'png', imageQuality: 0.9, saveDraft: true, suggestTitle: true,
     vue: null, vueUrl: 'https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js',
     html2canvasUrl: 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+    html2canvas: null, // pass the function (import html2canvas from 'html2canvas') to skip the CDN download
   };
   const COLORS = ['#E53935', '#FB8C00', '#FDD835', '#43A047', '#1E88E5', '#111111', '#FFFFFF'];
   const SEV_COLORS = ['#C62828', '#E07B00', '#C9A400', '#7A8597'];
@@ -119,7 +120,7 @@ const global = typeof window !== 'undefined' ? window : globalThis;
 @keyframes bt-pulse{0%{transform:scale(.95);opacity:.8}50%{transform:scale(1.15);opacity:0}100%{transform:scale(.95);opacity:0}}
 .bt-badge{position:absolute;top:-4px;inset-inline-end:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#F43F5E;color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;border:2px solid var(--bt-panel-bg);animation:bt-bounce 1s infinite}
 @keyframes bt-bounce{0%,100%{transform:translateY(-25%);animation-timing-function:cubic-bezier(.8,0,1,1)}50%{transform:none;animation-timing-function:cubic-bezier(0,0,.2,1)}}
-.bt-panel{position:fixed;width:min(calc(100vw - 24px),320px);max-height:calc(100vh - 24px);background:var(--bt-panel-bg);color:var(--bt-ink);border:1px solid var(--bt-line);border-radius:var(--bt-radius);box-shadow:var(--bt-shadow);overflow:hidden;display:flex;flex-direction:column;user-select:text;
+.bt-panel{position:fixed;z-index:calc(var(--bt-z) + 1);width:min(calc(100vw - 24px),320px);max-height:calc(100vh - 24px);background:var(--bt-panel-bg);color:var(--bt-ink);border:1px solid var(--bt-line);border-radius:var(--bt-radius);box-shadow:var(--bt-shadow);overflow:hidden;display:flex;flex-direction:column;user-select:text;
   transition:opacity .3s ease,transform .3s ease;transform-origin:bottom right}
 .bt-panel.left{transform-origin:bottom left}.bt-panel.top{transform-origin:top right}.bt-panel.top.left{transform-origin:top left}
 .bt-panel-enter-from,.bt-panel-leave-to{opacity:0;transform:translateY(8px) scale(.97)}
@@ -202,6 +203,7 @@ canvas{touch-action:none;max-width:100%;max-height:60vh;width:auto;height:auto;d
 .bt-rec{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:calc(var(--bt-z) + 6);display:flex;gap:10px;align-items:center;background:#111;color:#fff;padding:8px 10px 8px 14px;border-radius:999px;box-shadow:0 4px 16px rgba(0,0,0,.3);font-weight:600}
 .bt-rec .dot{width:10px;height:10px;border-radius:50%;background:#E53935;animation:bt-blink 1s steps(2) infinite}@keyframes bt-blink{to{opacity:.2}}.bt-rec button{font-weight:700;border:0;border-radius:999px;padding:4px 12px;background:#fff;color:#111;cursor:pointer}
 .bt-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:calc(var(--bt-z) + 5);background:var(--bt-ink);color:var(--bt-panel-bg);padding:8px 14px;border-radius:10px;font-weight:600}
+.bt-mic{list-style:none}.bt-mic label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--bt-muted);padding:6px 10px;cursor:pointer}.bt-mic input{accent-color:var(--bt-primary)}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 `;
 
@@ -291,6 +293,7 @@ canvas{touch-action:none;max-width:100%;max-height:60vh;width:auto;height:auto;d
                   <li v-if="opts.capture.element"><button @click="capture('element')">{{ I.element }} {{ L.capEl }}</button></li>
                   <li v-if="opts.capture.native && hasNative"><button @click="capture('native')">{{ I.native }} {{ L.capNative }}</button></li>
                   <li v-if="opts.capture.record && hasRecord"><button @click="record()">{{ I.record }} {{ L.record }}</button></li>
+                  <li v-if="opts.capture.record && hasRecord" class="bt-mic" @click.stop><label><input type="checkbox" v-model="mic"> {{ L.withMic }}</label></li>
                   <li><button @click="$refs.file.click()">{{ I.upload }} {{ L.upload }}</button></li>
                   <li v-if="opts.fields.attachments"><button @click="$refs.att.click()">{{ I.attach }} {{ L.attach }}</button></li>
                 </ul></div>
@@ -304,6 +307,7 @@ canvas{touch-action:none;max-width:100%;max-height:60vh;width:auto;height:auto;d
                 <button v-if="opts.capture.page" @click="capture('page')"><span class="ic">{{ I.page }}</span><span>{{ L.capPage }}</span></button>
                 <button v-if="opts.capture.element" @click="capture('element')"><span class="ic">{{ I.element }}</span><span>{{ L.capEl }}</span></button>
                 <button v-if="opts.capture.record && hasRecord" @click="record()"><span class="ic">{{ I.record }}</span><span>{{ L.record }}</span></button>
+                <label v-if="opts.capture.record && hasRecord" class="bt-mic" style="grid-column:1/-1"><input type="checkbox" v-model="mic"> {{ L.withMic }}</label>
                 <button class="alt" @click="$refs.file.click()" style="grid-column:1/-1">{{ I.upload }} {{ L.upload }}</button>
               </div>
               <p class="bt-hint" style="margin-top:10px">{{ L.paste }}</p>
@@ -351,7 +355,7 @@ canvas{touch-action:none;max-width:100%;max-height:60vh;width:auto;height:auto;d
     </template>
 
     <template v-else-if="step==='done'">
-      <div class="bt-body bt-done"><div class="ok" v-html="I.check"></div><h2>{{ L.sentTitle }}</h2><p class="bt-hint">{{ L.sentBody }}</p>
+      <div class="bt-body bt-done"><div class="ok" v-html="I.check"></div><h2>{{ L.sentTitle }}</h2><p class="bt-hint">{{ result.media ? L.sentBody : L.sentBodyText }}</p>
         <div class="bt-ref" v-if="result.id">{{ L.sentId }}: {{ result.id }}</div>
         <div class="bt-row bt-mt" style="justify-content:center"><a v-if="result.link" class="bt-btn" :href="result.link" target="_blank" rel="noopener" style="text-decoration:none">{{ L.openLink }} ↗</a><button v-if="result.link" class="bt-btn" @click="copy(result.link)">{{ L.copyLink }}</button></div></div>
       <div class="bt-foot"><button class="bt-btn ghost" @click="openBug('form')">{{ L.another }}</button><span class="bt-spacer"></span><button class="bt-btn primary" @click="close" ref="first">{{ L.close }}</button></div>
@@ -483,11 +487,20 @@ canvas{touch-action:none;max-width:100%;max-height:60vh;width:auto;height:auto;d
         const widgetStyle = computed(() => { const o = opts.button.offset + 'px', sz = opts.button.size; if (pos.x === null) return { [isLeft.value ? 'left' : 'right']: o, [isTop.value ? 'top' : 'bottom']: o };
           return { [isLeft.value ? 'left' : 'right']: (isLeft.value ? pos.x : innerWidth - pos.x - sz) + 'px', [isTop.value ? 'top' : 'bottom']: (isTop.value ? pos.y : innerHeight - pos.y - sz) + 'px' }; });
         const panelStyle = reactive({ left: '-9999px', top: '-9999px', visibility: 'hidden' });
+        // Where the panel opens from: an element passed to open()/toggle() ({ anchor }), the floating
+        // button, or — when the button is hidden — the corner set by button.position / button.offset.
+        let anchorEl = null;
+        function anchorRect() {
+          const a = anchorEl && anchorEl.isConnected ? anchorEl : fab.value; if (a) return a.getBoundingClientRect();
+          const o = opts.button.offset, sz = opts.button.size, left = isLeft.value ? o : innerWidth - o - sz, top = isTop.value ? o : innerHeight - o - sz;
+          return { left, top, right: left + sz, bottom: top + sz, width: sz, height: sz };
+        }
         function placePanel() {
-          const f = fab.value && fab.value.getBoundingClientRect(), pe = panelEl.value; if (!f || !pe) return;
+          const pe = panelEl.value; if (!pe) return; const f = anchorRect();
           const pr = pe.getBoundingClientRect(), gap = 14, m = 12, pw = pr.width, ph = pr.height;
+          const alignLeft = anchorEl && anchorEl.isConnected ? (f.left + f.width / 2) < innerWidth / 2 : isLeft.value;
           let top = f.top - gap - ph; if (top < m) top = f.bottom + gap; if (top + ph > innerHeight - m) top = Math.max(m, innerHeight - m - ph);
-          let left = isLeft.value ? f.left : f.right - pw; left = Math.max(m, Math.min(innerWidth - m - pw, left));
+          let left = alignLeft ? f.left : f.right - pw; left = Math.max(m, Math.min(innerWidth - m - pw, left));
           Object.assign(panelStyle, { left: left + 'px', top: top + 'px', visibility: 'visible' });
         }
         let ro = null;
@@ -526,10 +539,10 @@ canvas{touch-action:none;max-width:100%;max-height:60vh;width:auto;height:auto;d
         const resetPosition = () => { pos.x = null; pos.y = null; try { localStorage.removeItem(POS_KEY); } catch (e) {} };
 
         // panel
-        function openPanel(itemId) { const vis = visibleMenu.value; if (!itemId && opts.skipMenuWhenSingle && vis.length === 1 && vis[0].type === 'bug') { openBug('form'); return; }
+        function openPanel(itemId, o) { if (itemId && typeof itemId === 'object') { o = itemId; itemId = undefined; } anchorEl = (o && o.anchor) || null; const vis = visibleMenu.value; if (!itemId && opts.skipMenuWhenSingle && vis.length === 1 && vis[0].type === 'bug') { openBug('form'); return; }
           panel.value = true; badge.value = null; idle.value = false; clearTimeout(idleTimer); sheet.value = null; emit('open', 'panel'); if (itemId) { const m = menu.find(x => x.id === itemId); if (m) nextTick(() => pick(m)); } else if (opts.skipMenuWhenSingle && vis.length === 1) nextTick(() => pick(vis[0])); nextTick(() => panelEl.value && panelEl.value.querySelector('.bt-item') && panelEl.value.querySelector('.bt-item').focus()); }
         function closePanel() { panel.value = false; sheet.value = null; emit('close', 'panel'); armIdle(); }
-        const togglePanel = () => panel.value ? closePanel() : openPanel();
+        const togglePanel = o => panel.value ? closePanel() : openPanel(undefined, o);
         const sf = reactive({ rating: 0, title: '', text: '' }), sfErr = ref('');
         function pick(m) {
           sfErr.value = ''; Object.assign(sf, { rating: 0, title: '', text: '' });
@@ -605,7 +618,7 @@ canvas{touch-action:none;max-width:100%;max-height:60vh;width:auto;height:auto;d
         window.addEventListener('paste', onPaste);
 
         // capture
-        async function renderViewport() { if (!global.html2canvas) await loadScript(opts.html2canvasUrl); await nextTick(); await new Promise(r => setTimeout(r, 80)); return global.html2canvas(document.body, { useCORS: true, logging: false, scale: Math.min(2, devicePixelRatio || 1), ignoreElements: el => el === host, x: scrollX, y: scrollY, width: innerWidth, height: innerHeight }); }
+        async function renderViewport() { const h2c = typeof opts.html2canvas === 'function' ? opts.html2canvas : (global.html2canvas || (await loadScript(opts.html2canvasUrl), global.html2canvas)); await nextTick(); await new Promise(r => setTimeout(r, 80)); return h2c(document.body, { useCORS: true, logging: false, scale: Math.min(2, devicePixelRatio || 1), ignoreElements: el => el === host, x: scrollX, y: scrollY, width: innerWidth, height: innerHeight }); }
         function cropCanvas(c, area, scale) { const o = document.createElement('canvas'); o.width = Math.round(area.w * scale); o.height = Math.round(area.h * scale); o.getContext('2d').drawImage(c, area.x * scale, area.y * scale, o.width, o.height, 0, 0, o.width, o.height); return o; }
         async function nativeShot() { const stream = await navigator.mediaDevices.getDisplayMedia({ video: { displaySurface: 'browser' }, audio: false, preferCurrentTab: true, selfBrowserSurface: 'include' }); try { const v = document.createElement('video'); v.srcObject = stream; v.muted = true; await v.play(); await new Promise(r => setTimeout(r, 150)); const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight; c.getContext('2d').drawImage(v, 0, 0); return c; } finally { stream.getTracks().forEach(tr => tr.stop()); } }
         async function capture(kind, area) {
@@ -623,7 +636,7 @@ canvas{touch-action:none;max-width:100%;max-height:60vh;width:auto;height:auto;d
           menuOpen.value = false; if (!hasRecord) { error.value = L.unsupported; return; } if (rec.active) return;
           const reopen = open.value;
           try { const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: true, preferCurrentTab: true, selfBrowserSurface: 'include' });
-            if (mic.value) { try { const m = await navigator.mediaDevices.getUserMedia({ audio: true }); m.getAudioTracks().forEach(tr => stream.addTrack(tr)); } catch (e) {} }
+            if (mic.value) { try { const m = await navigator.mediaDevices.getUserMedia({ audio: true }); m.getAudioTracks().forEach(tr => stream.addTrack(tr)); } catch (e) { say(L.micDenied); } }
             const mime = opts.record.mimeType || ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'].find(m => MediaRecorder.isTypeSupported(m)) || '';
             const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
             Object.assign(rec, { active: true, seconds: 0, recorder, stream, chunks: [], start: Date.now() }); open.value = false; panel.value = false; mode.value = null;
@@ -723,7 +736,7 @@ canvas{touch-action:none;max-width:100%;max-height:60vh;width:auto;height:auto;d
           sending.value = true; error.value = ''; progress.value = null;
           const payload = { type: 'bug', ...JSON.parse(JSON.stringify(t)), reporter: reporterOut(), context: getContext(), meta: metaOut(), plugin: 'BugTicket/' + API.version }; emit('submit', payload);
           try { progress.value = 0; const res = await deliver(payload, menu.find(m => m.type === 'bug'), p => { progress.value = p; emit('progress', p); });
-            result.id = res.id || res.ticketId || res.key || null; result.link = (opts.successLink ? opts.successLink(res) : res.url || res.link) || null;
+            result.media = (payload.screenshots || []).length + (payload.recordings || []).length + (payload.attachments || []).length; result.id = res.id || res.ticketId || res.key || null; result.link = (opts.successLink ? opts.successLink(res) : res.url || res.link) || null;
             if (opts.onSuccess) opts.onSuccess(res, payload); emit('success', res, payload); Object.assign(t, blank()); applyReporter(); clearDraft(); draftRestored.value = false; step.value = 'done'; }
           catch (e) { error.value = fmt(L.sendFail, { msg: e.message }); if (opts.onError) opts.onError(e, payload); emit('error', e, payload); } finally { sending.value = false; progress.value = null; }
         }
@@ -758,7 +771,7 @@ canvas{touch-action:none;max-width:100%;max-height:60vh;width:auto;height:auto;d
 
   const API = {
     version: '4.4.0', init, destroy,
-    open: itemId => vm && vm.openPanel(itemId), close: () => vm && (vm.open ? vm.close() : vm.closePanel()), toggle: () => vm && vm.togglePanel(),
+    open: (itemId, o) => vm && vm.openPanel(itemId, o), close: () => vm && (vm.open ? vm.close() : vm.closePanel()), toggle: o => vm && vm.togglePanel(o),
     openBug: step => vm && vm.openBug(step), capture: kind => vm && vm.capture(kind || 'page'), record: () => vm && vm.record(), stopRecording: () => vm && vm.stopRecording(),
     setBadge: n => vm && vm._setBadge(n), setMeta: m => Object.assign(runtimeMeta, m || {}), setReporter: r => { runtimeReporter = r || null; vm && vm.applyReporter(); },
     setTheme: th => { if (!host || !currentOpts) return; currentOpts.theme = Object.assign({}, currentOpts.theme, th || {}); applyThemeVars(currentOpts); if (th && typeof th.css === 'string') themeStyle.textContent = th.css; },

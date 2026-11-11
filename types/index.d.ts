@@ -96,6 +96,12 @@ export interface Options {
   /** Inject a Vue 3 namespace (done automatically by the npm entry). */
   vue?: unknown;
   vueUrl?: string;
+  /**
+   * The html2canvas function (`import html2canvas from 'html2canvas'`). When set, nothing is
+   * downloaded from a CDN — use this under a strict Content-Security-Policy.
+   */
+  html2canvas?: (element: HTMLElement, options?: Record<string, unknown>) => Promise<HTMLCanvasElement>;
+  /** Fallback script URL for html2canvas when `html2canvas` is not given (default: cdnjs). */
   html2canvasUrl?: string;
 }
 
@@ -138,15 +144,25 @@ export interface Payload {
   plugin: string;
 }
 
+export interface OpenOptions {
+  /** Element the panel opens next to (below it, or above it near the bottom of the screen). */
+  anchor?: HTMLElement | null;
+}
+
 export type EventName = 'open' | 'close' | 'submit' | 'progress' | 'success' | 'error' | 'screenshot' | 'recording' | 'drag';
 
 export interface BugTicketAPI {
   version: string;
   init(options?: Options): Promise<BugTicketAPI>;
   destroy(): void;
-  open(itemId?: string): void;
+  /**
+   * Open the panel, or one item directly. `anchor` places the panel next to your own element —
+   * use it with `button: { hidden: true }` to open the menu from your app's UI.
+   */
+  open(itemId?: string, options?: OpenOptions): void;
+  open(options: OpenOptions): void;
   close(): void;
-  toggle(): void;
+  toggle(options?: OpenOptions): void;
   openBug(step?: 'form'): void;
   capture(kind?: 'page' | 'area' | 'element' | 'native'): Promise<void> | void;
   record(): Promise<void> | void;
